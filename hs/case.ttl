@@ -1,0 +1,6 @@
+@prefix hslynk: <http://hslynk.com/ontologies/case-management/> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+<> a hslynk:Case ;
+    dct:title "Contract personal with the skills for Case Management."^^xsd:string .
+
