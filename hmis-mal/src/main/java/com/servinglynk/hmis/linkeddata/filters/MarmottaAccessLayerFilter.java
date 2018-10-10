@@ -5,6 +5,7 @@
  */
 package com.servinglynk.hmis.linkeddata.filters;
 
+import com.servinglynk.hmis.linkeddata.services.HslynkAccessLayerService;
 import java.io.IOException;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -14,6 +15,8 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import org.apache.marmotta.platform.core.api.config.ConfigurationService;
 import org.apache.marmotta.platform.core.api.modules.MarmottaHttpFilter;
 import org.apache.marmotta.platform.core.api.user.UserService;
@@ -36,9 +39,13 @@ public class MarmottaAccessLayerFilter implements MarmottaHttpFilter {
   @Inject
   private UserService userService;
 
+  
+  @Inject
+  private HslynkAccessLayerService hslynkAccessLayerService;
+  
   @Override
   public String getPattern() {
-    return "sdfsdfsdfsdfsd^/.*";
+    return "^/.*";
   }
 
   @Override
@@ -58,7 +65,7 @@ public class MarmottaAccessLayerFilter implements MarmottaHttpFilter {
 
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-
+    
     if (configurationService.getBooleanConfiguration("security.enabled", true)) {
       // check whether access is granted
       if (request instanceof HttpServletRequest) {
@@ -67,7 +74,7 @@ public class MarmottaAccessLayerFilter implements MarmottaHttpFilter {
         log.debug("Checking access for user '{}' with roles '{}'", httpRequest.getAttribute("user.name"),
             httpRequest.getAttribute("user.roles"));
 
-        if (/*securityService.grantAccess(httpRequest)*/ false) {
+        if (hslynkAccessLayerService.validate("", "")) {
           chain.doFilter(request, response);
         } else // handled by LMFAuthenticationFilter 
         {
