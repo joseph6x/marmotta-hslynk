@@ -5,8 +5,10 @@
  */
 package com.servinglynk.hmis.linkeddata.filters;
 
+import com.servinglynk.hmis.linkeddata.auth.HslynkAccessLayerServiceImpl;
 import com.servinglynk.hmis.linkeddata.services.HslynkAccessLayerService;
 import java.io.IOException;
+import java.io.PrintWriter;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.servlet.FilterChain;
@@ -15,12 +17,10 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import org.apache.marmotta.platform.core.api.config.ConfigurationService;
 import org.apache.marmotta.platform.core.api.modules.MarmottaHttpFilter;
-import org.apache.marmotta.platform.core.api.user.UserService;
 import org.apache.marmotta.platform.core.exception.security.AccessDeniedException;
+import org.apache.marmotta.platform.ldp.webservices.LdpWebService;
 import org.slf4j.Logger;
 
 /**
@@ -37,15 +37,11 @@ public class MarmottaAccessLayerFilter implements MarmottaHttpFilter {
   private ConfigurationService configurationService;
 
   @Inject
-  private UserService userService;
-
-  
-  @Inject
   private HslynkAccessLayerService hslynkAccessLayerService;
-  
+
   @Override
   public String getPattern() {
-    return "^/.*";
+    return "/ldp/.*";
   }
 
   @Override
@@ -55,35 +51,24 @@ public class MarmottaAccessLayerFilter implements MarmottaHttpFilter {
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
-    log.info("Access Control Filter starting up. Access control is {}.", configurationService.getBooleanConfiguration("security.enabled", true) ? "enabled" : "disabled");
-    if (!configurationService.getBooleanConfiguration("security.configured", true)) {
-      //securityService.loadSecurityProfile(configurationService.getStringConfiguration("security.profile"));
-    } else {
-      //securityService.ping();
-    }
+    hslynkAccessLayerService.ping();
   }
 
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-    
-    if (configurationService.getBooleanConfiguration("security.enabled", true)) {
-      // check whether access is granted
-      if (request instanceof HttpServletRequest) {
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-
-        log.debug("Checking access for user '{}' with roles '{}'", httpRequest.getAttribute("user.name"),
-            httpRequest.getAttribute("user.roles"));
-
-        if (hslynkAccessLayerService.validate("", "")) {
-          chain.doFilter(request, response);
-        } else // handled by LMFAuthenticationFilter 
-        {
+    if (configurationService.getBooleanConfiguration("hmis-mal.enabled", true)
+        && request instanceof HttpServletRequest) {
+      HttpServletRequest httpRequest = (HttpServletRequest) request;
+      String LDP_methodID = httpRequest.getServletPath();
+      //Is it a LDP request?
+      if (LDP_methodID.startsWith(LdpWebService.PATH)) {
+        String token = httpRequest.getHeader(HslynkAccessLayerServiceImpl.AUTH_HEADER);
+        if (!hslynkAccessLayerService.validate(LDP_methodID, token)) {
           throw new AccessDeniedException();
         }
       }
-    } else {
-      chain.doFilter(request, response);
     }
+    chain.doFilter(request, response);
   }
 
   @Override

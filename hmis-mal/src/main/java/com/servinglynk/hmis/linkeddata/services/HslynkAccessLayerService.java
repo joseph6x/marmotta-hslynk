@@ -9,6 +9,8 @@ import javax.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public interface HslynkAccessLayerService {
-  
+
   public boolean validate(String method, String token);
+
+  public void ping();
 }
