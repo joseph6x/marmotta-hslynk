@@ -29,7 +29,7 @@
 
     <name>HSlynk Apache Marmotta</name>
     <description>The hslynk WAR bundle</description>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.0.1-SNAPSHOT</version>
 
 
     <properties>
