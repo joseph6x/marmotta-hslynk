@@ -52,7 +52,7 @@ public class MarmottaAccessLayerFilter implements MarmottaHttpFilter {
 
   @Override
   public String getPattern() {
-    return "/ldp/.*";
+    return "^/.*";
   }
 
   @Override
